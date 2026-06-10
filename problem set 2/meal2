@@ -1,0 +1,29 @@
+from string.templatelib import convert
+
+
+def main():
+    answer = input("what time is it? ")
+    time = convert(answer)
+    if 7.0 <= time <= 10.0:
+        print("breakfast time")
+    elif 12.0 <= time <= 14.0:
+        print("lunch time")
+    elif 19.0 <= time <= 21.0:
+        print("dinner time")    
+
+def convert(time_str):
+    time_str = time_str.lower().strip()
+    is_pm = "p.m." in time_str or "pm" in time_str
+    is_am = "a.m." in time_str or "am" in time_str
+    time_str = time_str.replace("a.m.", "").replace("p.m.", "").replace("am", "").replace("pm", "").strip()
+    hours, minutes = time_str.split(":")
+    hours = float(hours)
+    minutes = float(minutes)
+    if is_pm and hours != 12.0:
+        hours += 12.0
+    elif is_am and hours == 12.0:
+        hours = 0.0
+    return hours + (minutes / 60.0)
+
+if __name__ == "__main__":
+    main()
