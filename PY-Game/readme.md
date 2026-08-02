@@ -15,7 +15,7 @@ simple — rack up as high a score as possible before you run out of health.
 
  Controls
 - WASD — move
-- Mouse (left click)** — shoot toward cursor
+- Mouse (left click) — shoot toward cursor
 - SPACE — dash
 - E — charge and release the wave ultimate
 - P — pause / resume
