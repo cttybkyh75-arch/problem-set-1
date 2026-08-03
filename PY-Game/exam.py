@@ -213,7 +213,7 @@ class Portal:
         if math.dist((self.x,self.y),(player.x,player.y)) < self.radius + player.radius:
             player.portal_power, self.active = 7, False
 
-    # Draws spinning spokes around a ring
+
     def draw(self, surface):
         pos = (int(self.x), int(self.y))
         pygame.draw.circle(surface, PURPLE, pos, self.radius, 5)
@@ -224,8 +224,6 @@ class Portal:
             pygame.draw.line(surface, PINK, pos, end, 3)
 
 
-# ===================== Helper functions =====================
-# Draws background and grid overlay
 def draw_background():
     screen.fill(BACKGROUND)
     for x in range(0, WIDTH, 50): pygame.draw.line(screen, GRID, (x,0), (x,HEIGHT))
@@ -250,7 +248,7 @@ def reset_game():
             0, 0, 0, 25, 0, False, "")
 
 
-# ===================== Game initialization =====================
+
 (player, enemies, bullets, crystals, portal,
  enemy_timer, crystal_timer, game_time,
  portal_score, score, game_over, winner_text_str) = reset_game()
@@ -258,7 +256,7 @@ def reset_game():
 running, paused = True, False
 auto_shoot = False
 
-# ===================== Main game loop =====================
+
 while running:
     dt = clock.tick(60) / 1000
 
