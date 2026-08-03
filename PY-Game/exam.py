@@ -1,6 +1,5 @@
 import pygame, random, math
 
-# Window, clock, colors, fonts setup
 pygame.init()
 WIDTH, HEIGHT = 1500, 920
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -16,9 +15,7 @@ small_font = pygame.font.Font(None, 24)
 big_font = pygame.font.Font(None, 80)
 
 
-# CLASS 1
 class Player:
-    # Starting position, stats, and cooldown timers
     def __init__(self):
         self.radius, self.speed = 20, 280
         self.x, self.y = WIDTH // 2, HEIGHT // 2
@@ -33,7 +30,6 @@ class Player:
         self.ult_cooldown = 0
         self.ult_max_cooldown = 10.0
 
-    # WASD movement, dash override, cooldown countdowns
     def update(self, dt, keys, speed_mult=1.0):
         if not self.alive: return
         movement = pygame.Vector2(0, 0)
@@ -51,19 +47,16 @@ class Player:
             self.y += self.dash_direction.y * 750 * dt
             self.dash_timer -= dt
 
-        # Clamp position to screen bounds
         self.x = max(self.radius, min(WIDTH - self.radius, self.x))
         self.y = max(self.radius, min(HEIGHT - self.radius, self.y))
         for attr in ('shoot_cooldown','dash_cooldown','portal_power','ult_cooldown'):
             if getattr(self, attr) > 0: setattr(self, attr, getattr(self, attr) - dt)
         if self.ult_charging: self.ult_charge_timer += dt
 
-    # Starts ult charge if off cooldown
     def trigger_ult_charge(self):
         if not self.alive or self.ult_cooldown > 0 or self.ult_charging: return
         self.ult_charging, self.ult_charge_timer = True, 0
 
-    # Fires bullet ring and damages nearby enemies
     def check_and_detonate_ult(self, bullets, enemies):
         if self.ult_charging and self.ult_charge_timer >= self.ult_charge_duration:
             self.ult_charging, self.ult_charge_timer, self.ult_cooldown = False, 0, self.ult_max_cooldown
@@ -73,7 +66,6 @@ class Player:
             for enemy in enemies:
                 if math.dist((self.x, self.y), (enemy.x, enemy.y)) < 250: enemy.health -= 5
 
-    # Fires one bullet toward a target point
     def shoot(self, target_pos):
         if not self.alive or self.shoot_cooldown > 0: return None
         direction = pygame.Vector2(target_pos[0] - self.x, target_pos[1] - self.y)
@@ -83,7 +75,6 @@ class Player:
             return Bullet(self.x, self.y, direction.x, direction.y, self.portal_power > 0, self.color)
         return None
 
-    # Starts a short burst dash in held direction
     def dash(self, keys):
         if not self.alive or self.dash_cooldown > 0: return
         direction = pygame.Vector2(0, 0)
@@ -95,7 +86,6 @@ class Player:
             self.dash_direction = direction.normalize()
             self.dash_timer, self.dash_cooldown = 0.18, 1.2
 
-    # Draws player plus ult/portal status rings
     def draw(self, surface):
         if not self.alive: return
         pos = (int(self.x), int(self.y))
@@ -109,9 +99,7 @@ class Player:
         pygame.draw.circle(surface, WHITE, pos, 7)
 
 
-# CLASS 2
 class Enemy:
-    # Spawn position and stats scaled by difficulty
     def __init__(self, difficulty):
         side = random.randint(0, 3)
         self.x, self.y = [(random.randint(0,WIDTH),-30),(WIDTH+30,random.randint(0,HEIGHT)),
@@ -121,7 +109,6 @@ class Enemy:
         self.health = 2 if difficulty <= 12 else 3
         self.damage_cooldown = 0
 
-    # Moves straight toward the player
     def update(self, dt, player, speed_mult=1.0):
         if not player.alive: return
         direction = pygame.Vector2(player.x - self.x, player.y - self.y)
@@ -130,7 +117,6 @@ class Enemy:
         self.y += direction.y * self.speed * speed_mult * dt
         if self.damage_cooldown > 0: self.damage_cooldown -= dt
 
-    # Damages player on contact, on cooldown
     def damage_player(self, player):
         if not player.alive: return
         if math.dist((self.x,self.y),(player.x,player.y)) < self.radius + player.radius and self.damage_cooldown <= 0:
@@ -138,7 +124,6 @@ class Enemy:
             if player.health <= 0: player.health, player.alive = 0, False
             self.damage_cooldown = 0.8
 
-    # Draws a layered circle enemy
     def draw(self, surface):
         pos = (int(self.x), int(self.y))
         pygame.draw.circle(surface, RED, pos, self.radius)
@@ -146,9 +131,7 @@ class Enemy:
         pygame.draw.circle(surface, BLACK, pos, 4)
 
 
-# CLASS 3
 class Bullet:
-    # Position, direction, and powered stat block
     def __init__(self, x, y, direction_x, direction_y, powered, color=YELLOW):
         self.x, self.y = x, y
         self.direction_x, self.direction_y = direction_x, direction_y
@@ -159,7 +142,6 @@ class Bullet:
         self.radius = 8 if powered else 6
         self.alive = True
 
-    # Moves forward, dies off-screen
     def update(self, dt):
         self.x += self.direction_x * self.speed * dt
         self.y += self.direction_y * self.speed * dt
@@ -169,9 +151,7 @@ class Bullet:
         pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.radius)
 
 
-# CLASS 4
 class Crystal:
-    # Random spawn point and rotation
     def __init__(self):
         self.x, self.y = random.randint(50, WIDTH-50), random.randint(80, HEIGHT-50)
         self.radius = 12
@@ -179,7 +159,6 @@ class Crystal:
 
     def update(self, dt): self.rotation += 180 * dt
 
-    # Heals player, adds score on contact
     def collect(self, player, score):
         if not player.alive: return False, score
         if math.dist((self.x,self.y),(player.x,player.y)) < self.radius + player.radius:
@@ -187,7 +166,6 @@ class Crystal:
             return True, score + 5
         return False, score
 
-    # Draws a rotating diamond shape
     def draw(self, surface):
         points = [(self.x + math.cos(math.radians(a+self.rotation))*self.radius,
                    self.y + math.sin(math.radians(a+self.rotation))*self.radius) for a in range(0,360,90)]
@@ -195,9 +173,7 @@ class Crystal:
         pygame.draw.polygon(surface, WHITE, points, 2)
 
 
-# CLASS 5
 class Portal:
-    # Random spawn point and countdown timer
     def __init__(self):
         self.x, self.y = random.randint(100, WIDTH-100), random.randint(120, HEIGHT-100)
         self.radius, self.timer, self.rotation, self.active = 30, 10, 0, True
@@ -207,12 +183,10 @@ class Portal:
         self.rotation += 180 * dt
         if self.timer <= 0: self.active = False
 
-    # Grants a temporary rapid-fire buff
     def use(self, player):
         if not player.alive: return
         if math.dist((self.x,self.y),(player.x,player.y)) < self.radius + player.radius:
             player.portal_power, self.active = 7, False
-
 
     def draw(self, surface):
         pos = (int(self.x), int(self.y))
@@ -232,7 +206,6 @@ def draw_background():
 
 AUTO_SHOOT_RANGE = 380
 
-# Finds closest enemy for auto-shoot
 def find_nearest_target(p, enemies):
     nearest, nearest_dist = None, AUTO_SHOOT_RANGE
     for e in enemies:
@@ -241,12 +214,10 @@ def find_nearest_target(p, enemies):
     return nearest
 
 
-# Resets all state to a fresh run
 def reset_game():
     player = Player()
     return (player, [], [], [Crystal(), Crystal()], None,
             0, 0, 0, 25, 0, False, "")
-
 
 
 (player, enemies, bullets, crystals, portal,
@@ -256,11 +227,9 @@ def reset_game():
 running, paused = True, False
 auto_shoot = False
 
-
 while running:
     dt = clock.tick(60) / 1000
 
-    # Pause, dash, ult, and restart key handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT: running = False
 
@@ -282,7 +251,6 @@ while running:
     mouse_buttons = pygame.mouse.get_pressed()
     mouse_position = pygame.mouse.get_pos()
 
-    # Core game logic, skipped while paused/over
     if not game_over and not paused:
         game_time += dt
         speed_mult = min(3.0, 1.0 + game_time * 0.01)
@@ -290,7 +258,6 @@ while running:
         player.update(dt, keys, speed_mult)
         player.check_and_detonate_ult(bullets, enemies)
 
-        # Manual click-fire, or auto-fire nearest enemy
         if mouse_buttons[0] and player.alive:
             b = player.shoot(mouse_position)
             if b: bullets.append(b)
@@ -300,34 +267,28 @@ while running:
                 b = player.shoot((target.x, target.y))
                 if b: bullets.append(b)
 
-        # Timed enemy spawns, ramping up with score
         enemy_timer += dt
         spawn_speed = max(0.35, 1.3 - score * 0.01)
         if enemy_timer >= spawn_speed:
             enemies.append(Enemy(score // 10))
             enemy_timer = 0
 
-        # Timed crystal spawns
         crystal_timer += dt
         if crystal_timer >= 6:
             crystals.append(Crystal())
             crystal_timer = 0
 
-        # Portal spawn once score threshold hit
         if score >= portal_score and portal is None:
             portal = Portal()
             portal_score += 40
 
-        # Move bullets, drop off-screen ones
         for bullet in bullets: bullet.update(dt)
         bullets = [b for b in bullets if b.alive]
 
-        # Move enemies, apply contact damage
         for enemy in enemies:
             enemy.update(dt, player, speed_mult)
             enemy.damage_player(player)
 
-        # Bullet-enemy collisions, award score
         for bullet in bullets:
             for enemy in enemies:
                 if math.dist((bullet.x,bullet.y),(enemy.x,enemy.y)) < bullet.radius + enemy.radius:
@@ -338,7 +299,6 @@ while running:
         enemies = [e for e in enemies if e.health > 0]
         bullets = [b for b in bullets if b.alive]
 
-        # Update and check crystal pickups
         for crystal in crystals: crystal.update(dt)
         remaining_crystals = []
         for crystal in crystals:
@@ -346,18 +306,15 @@ while running:
             if not collected: remaining_crystals.append(crystal)
         crystals = remaining_crystals
 
-        # Update portal, check use or expiry
         if portal is not None:
             portal.update(dt)
             portal.use(player)
             if not portal.active: portal = None
 
-        # End game on player death
         if not player.alive:
             game_over = True
             winner_text_str = "GAME OVER"
 
-    # Draw background, objects, and player
     draw_background()
     for crystal in crystals: crystal.draw(screen)
     if portal is not None: portal.draw(screen)
@@ -365,7 +322,6 @@ while running:
     for enemy in enemies: enemy.draw(screen)
     player.draw(screen)
 
-    # HUD: health bar, dash/ult status, score
     pygame.draw.rect(screen, (60,30,40), (25,25,200,20))
     h_w = (player.health / player.max_health) * 200
     pygame.draw.rect(screen, GREEN if player.alive else RED, (25,25,h_w,20))
@@ -389,7 +345,6 @@ while running:
     controls = small_font.render(controls_str, True, (170,180,210))
     screen.blit(controls, (WIDTH//2 - controls.get_width()//2, HEIGHT-25))
 
-    # Game over / paused overlay screens
     if game_over:
         overlay = pygame.Surface((WIDTH,HEIGHT)); overlay.set_alpha(190); overlay.fill(BLACK)
         screen.blit(overlay, (0,0))
